@@ -11,9 +11,9 @@ keywords = ["information-geometry", "fisher-rao", "divergence", "riemannian-geom
 categories = ["science", "mathematics"]
 
 [dependencies]
-thiserror = { workspace = true }
-logp = { workspace = true }
+thiserror = "2.0"
+logp = "0.1.0"
 
 [dev-dependencies]
-proptest = { workspace = true }
+proptest = "1.9"
 
