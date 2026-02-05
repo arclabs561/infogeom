@@ -1,8 +1,8 @@
-# infgeom
+# infogeom
 
 Information geometry primitives.
 
-`logp` provides divergence/entropy functionals on the simplex; `infgeom` builds **geometric**
+`logp` provides divergence/entropy functionals on the simplex; `infogeom` builds **geometric**
 structure on top (metrics, distances, and later projections/dual connections) without mixing in
 application policy.
 
@@ -15,13 +15,13 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-infgeom = "0.1"
+infogeom = "0.1"
 ```
 
 Compute Rao (Fisher–Rao) and Hellinger distances on the simplex:
 
 ```rust
-use infgeom::{rao_distance_categorical, hellinger};
+use infogeom::{rao_distance_categorical, hellinger};
 
 let p = [0.70, 0.20, 0.10];
 let q = [0.10, 0.20, 0.70];

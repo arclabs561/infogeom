@@ -1,4 +1,4 @@
-//! `infgeom`: information geometry primitives.
+//! `infogeom`: information geometry primitives.
 //!
 //! This crate treats divergences as **contrast functions** that induce geometric structure
 //! (Eguchi-style), and provides lightweight, reusable geometry on common statistical manifolds.
@@ -12,7 +12,7 @@
 //! ## Quick example
 //!
 //! ```rust
-//! use infgeom::{rao_distance_categorical, hellinger};
+//! use infogeom::{rao_distance_categorical, hellinger};
 //!
 //! let p = [0.7, 0.2, 0.1];
 //! let q = [0.1, 0.2, 0.7];

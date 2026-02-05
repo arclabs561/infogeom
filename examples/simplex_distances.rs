@@ -1,4 +1,4 @@
-use infgeom::{hellinger, rao_distance_categorical};
+use infogeom::{hellinger, rao_distance_categorical};
 
 fn main() {
     let p = [0.70, 0.20, 0.10];

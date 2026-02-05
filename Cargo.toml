@@ -1,12 +1,12 @@
 [package]
-name = "infgeom"
+name = "infogeom"
 version = "0.1.0"
 edition = "2021"
 description = "Information geometry primitives built from divergences (Fisher-Rao, alpha-geometry scaffolding)"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/arclabs561/infgeom"
-homepage = "https://github.com/arclabs561/infgeom"
-documentation = "https://docs.rs/infgeom"
+repository = "https://github.com/arclabs561/infogeom"
+homepage = "https://github.com/arclabs561/infogeom"
+documentation = "https://docs.rs/infogeom"
 readme = "README.md"
 keywords = ["information-geometry", "fisher-rao", "divergence", "riemannian-geometry"]
 categories = ["science", "mathematics"]
