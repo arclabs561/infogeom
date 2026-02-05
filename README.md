@@ -1,13 +1,22 @@
 # infogeom
 
-Information geometry primitives.
+Information geometry primitives for probability distributions.
 
-`logp` provides divergence/entropy functionals on the simplex; `infogeom` builds **geometric**
-structure on top (metrics, distances, and later projections/dual connections) without mixing in
-application policy.
+`logp` provides divergence/entropy functionals on the simplex; `infogeom` builds **geometry**
+on top (metrics and distances) without mixing in application policy.
 
-This crate is **classical** information geometry (simplex / exponential-family direction), not
-quantum IG (see the separate `qig` crate in the broader workspace for density-matrix geometry).
+This crate is *classical* information geometry (simplex / exponential-family direction), not
+quantum IG (density-matrix geometry lives in the separate `qig` crate).
+
+## Why this exists
+
+When you work with categorical distributions (points on the probability simplex), Euclidean
+distance is often the wrong default. `infogeom` starts from distances that respect the simplex’s
+geometry, so you can:
+
+- compare distributions in a geometry-aware way (Rao / Fisher–Rao),
+- use a bounded metric that stays well-scaled (Hellinger),
+- reuse small building blocks inside larger algorithms (clustering, interpolation, monitoring).
 
 ## Quickstart
 

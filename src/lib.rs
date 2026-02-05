@@ -1,10 +1,14 @@
 //! `infogeom`: information geometry primitives.
 //!
-//! This crate treats divergences as **contrast functions** that induce geometric structure
-//! (Eguchi-style), and provides lightweight, reusable geometry on common statistical manifolds.
+//! This crate provides small, policy-free building blocks for geometry on probability
+//! distributions.
 //!
-//! Initial implementation: Fisher–Rao (Rao) distance on the probability simplex (categorical
-//! distributions), using the classical sphere embedding.
+//! Today it focuses on the probability simplex (categorical distributions):
+//! - Fisher–Rao / Rao distance
+//! - Hellinger distance
+//!
+//! `logp` provides divergence/entropy functionals and simplex validation; `infogeom` builds
+//! geometry on top.
 //!
 //! Reference orientation:
 //! - Frank Nielsen’s divergence/IG portal: https://franknielsen.github.io/IG/index.html
