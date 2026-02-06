@@ -10,7 +10,7 @@ quantum IG (density-matrix geometry lives in the separate `qig` crate).
 
 Related:
 - If you start from *samples* and want property estimation (entropy/support/unseen mass), see
-  `propest`.
+  `unseen`.
 
 ## Why this exists
 
