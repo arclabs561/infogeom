@@ -8,6 +8,10 @@ on top (metrics and distances) without mixing in application policy.
 This crate is *classical* information geometry (simplex / exponential-family direction), not
 quantum IG (density-matrix geometry lives in the separate `qig` crate).
 
+Related:
+- If you start from *samples* and want property estimation (entropy/support/unseen mass), see
+  `propest`.
+
 ## Why this exists
 
 When you work with categorical distributions (points on the probability simplex), Euclidean

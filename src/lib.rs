@@ -10,6 +10,10 @@
 //! `logp` provides divergence/entropy functionals and simplex validation; `infogeom` builds
 //! geometry on top.
 //!
+//! Related:
+//! - `propest` estimates properties from samples (unseen regime) when you don’t have an explicit
+//!   distribution yet.
+//!
 //! Reference orientation:
 //! - Frank Nielsen’s divergence/IG portal: https://franknielsen.github.io/IG/index.html
 //!
