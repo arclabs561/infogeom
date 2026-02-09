@@ -28,7 +28,8 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-infogeom = "0.1"
+# Not on crates.io yet; depend via git (pin `rev` for reproducibility).
+infogeom = { git = "https://github.com/arclabs561/infogeom" }
 ```
 
 Compute Rao (Fisher–Rao) and Hellinger distances on the simplex:
@@ -45,6 +46,11 @@ let d_hel = hellinger(&p, &q, 1e-12).unwrap();
 assert!(d_rao >= 0.0);
 assert!((0.0..=1.0).contains(&d_hel));
 ```
+
+## Status
+
+- Experimental, small surface.
+- Not published on crates.io yet (`Cargo.toml` sets `publish = false`).
 
 ## API tour
 
