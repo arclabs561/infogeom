@@ -69,7 +69,7 @@ assert!((0.0..=1.0).contains(&d_hel));
   - Hellinger: \([0, 1]\)
 
 Background reading:
-- Frank Nielsen’s “Information geometry and divergences” portal: https://franknielsen.github.io/IG/index.html
+- Frank Nielsen’s “Information geometry and divergences” portal: [franknielsen.github.io/IG](https://franknielsen.github.io/IG/index.html)
 
 ## Examples
 
