@@ -1,16 +1,10 @@
 # infogeom
 
-Information geometry primitives for probability distributions.
-
-`logp` provides divergence/entropy functionals on the simplex; `infogeom` builds **geometry**
-on top (metrics and distances) without mixing in application policy.
+Information geometry primitives for probability distributions: metrics and distances on the
+simplex (Fisher–Rao / Rao, Hellinger) without mixing in application policy.
 
 This crate is *classical* information geometry (simplex / exponential-family direction), not
 quantum IG (density-matrix geometry lives in the separate `qig` crate).
-
-Related:
-- If you start from *samples* and want property estimation (entropy/support/unseen mass), see
-  `fingerprints`.
 
 ## Why this exists
 
@@ -58,7 +52,7 @@ assert!((0.0..=1.0).contains(&d_hel));
   - Fisher–Rao (Rao) distance on the simplex via the sphere embedding:
     \(d_{FR}(p,q) = 2\arccos(\sum_i \sqrt{p_i q_i})\)
 - `hellinger(p, q, tol) -> Result<f64>`
-  - Hellinger distance (bounded metric on the simplex) via `logp`:
+  - Hellinger distance (bounded metric on the simplex):
     \(H^2(p,q) = 1 - \sum_i \sqrt{p_i q_i}\)
 
 ## Invariants and tolerances
@@ -83,4 +77,3 @@ Background reading:
 ## License
 
 MIT OR Apache-2.0
-

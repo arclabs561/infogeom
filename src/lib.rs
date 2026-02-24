@@ -7,15 +7,8 @@
 //! - Fisher–Rao / Rao distance
 //! - Hellinger distance
 //!
-//! `logp` provides divergence/entropy functionals and simplex validation; `infogeom` builds
-//! geometry on top.
-//!
-//! Related:
-//! - `fingerprints` estimates properties from samples (unseen regime) when you don’t have an explicit
-//!   distribution yet.
-//!
 //! Reference orientation:
-//! - Frank Nielsen’s divergence/IG portal: https://franknielsen.github.io/IG/index.html
+//! - Frank Nielsen’s divergence/IG portal: <https://franknielsen.github.io/IG/index.html>
 //!
 //! ## Quick example
 //!
@@ -56,10 +49,10 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// \( d_{FR}(p,q) = 2 \arccos\left(\sum_i \sqrt{p_i q_i}\right) \).
 ///
 /// Notes:
-/// - The inner term is the Bhattacharyya coefficient \(BC(p,q)\in[0,1]\).
+/// - The inner term is the Bhattacharyya coefficient \(BC(p,q)\in\[0,1\]\).
 /// - We validate both inputs are on the simplex within `tol`.
 pub fn rao_distance_categorical(p: &[f64], q: &[f64], tol: f64) -> Result<f64> {
-    // Delegate simplex checks to `logp` and reuse its Bhattacharyya coefficient.
+    // Simplex validation and Bhattacharyya coefficient (via dependency).
     let mut bc = logp::bhattacharyya_coeff(p, q, tol)?;
 
     // Numerical handling:
@@ -75,7 +68,7 @@ pub fn rao_distance_categorical(p: &[f64], q: &[f64], tol: f64) -> Result<f64> {
 /// Hellinger distance \(H(p,q)\) induced by the simplex sphere embedding.
 ///
 /// For categorical distributions, \(H^2(p,q) = 1 - BC(p,q)\), where \(BC\) is the Bhattacharyya
-/// coefficient. This is a bounded metric on the simplex with range \([0, 1]\).
+/// coefficient. This is a bounded metric on the simplex with range \(\[0, 1\]\).
 pub fn hellinger(p: &[f64], q: &[f64], tol: f64) -> Result<f64> {
     Ok(logp::hellinger(p, q, tol)?)
 }
@@ -149,4 +142,3 @@ mod tests {
         }
     }
 }
-

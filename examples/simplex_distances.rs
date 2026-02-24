@@ -13,4 +13,3 @@ fn main() {
     println!("Rao distance (radians): {:.6}", d_rao);
     println!("Hellinger distance:     {:.6}", d_hel);
 }
-
