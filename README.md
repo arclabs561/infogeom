@@ -1,5 +1,9 @@
 # infogeom
 
+[![crates.io](https://img.shields.io/crates/v/infogeom.svg)](https://crates.io/crates/infogeom)
+[![Documentation](https://docs.rs/infogeom/badge.svg)](https://docs.rs/infogeom)
+[![CI](https://github.com/arclabs561/infogeom/actions/workflows/ci.yml/badge.svg)](https://github.com/arclabs561/infogeom/actions/workflows/ci.yml)
+
 Information geometry primitives for probability distributions: metrics and distances on the
 simplex (Fisher–Rao / Rao, Hellinger) without mixing in application policy.
 
