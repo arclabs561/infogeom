@@ -1,10 +1,10 @@
 //! Cross-crate example: `logp` divergences alongside `infogeom` geometric distances.
 //!
-//! Shows how f-divergences from `logp` relate to the Fisher--Rao geodesic distance
+//! Shows how f-divergences from `logp` relate to the Fisher-Rao geodesic distance
 //! and Hellinger metric provided by `infogeom`. All computations use discrete
 //! distributions over 4 categories.
 
-use infogeom::{hellinger, rao_distance_categorical};
+use infogeom::{fisher_rao_geodesic, hellinger, rao_distance_categorical};
 
 fn main() {
     let tol = 1e-12;
@@ -37,6 +37,17 @@ fn main() {
             "{:<14} {:>10.6} {:>10.6} {:>10.6} {:>10.6} {:>10.6} {:>10.6}",
             label, rao, hel, kl, js, tv, bhatt_d,
         );
+    }
+
+    println!();
+
+    // --- Geodesic interpolation along Fisher-Rao ---
+    println!("Fisher-Rao geodesic from p to q_far (5 steps):");
+    for step in 0..=4 {
+        let t = step as f64 / 4.0;
+        let gamma = fisher_rao_geodesic(&p, &q_far, t, tol).unwrap();
+        let d_from_p = rao_distance_categorical(&p, &gamma, tol).unwrap();
+        println!("  t={t:.2}  gamma={:.4?}  d(p, gamma)={d_from_p:.6}", gamma);
     }
 
     println!();
