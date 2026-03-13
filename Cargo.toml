@@ -1,8 +1,8 @@
 [package]
 name = "infogeom"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Information geometry primitives built from divergences (Fisher-Rao, alpha-geometry scaffolding)"
+description = "Information geometry on the simplex: Fisher-Rao geodesics, alpha-geodesics, and natural gradient"
 license = "MIT OR Apache-2.0"
 publish = false
 repository = "https://github.com/arclabs561/infogeom"
@@ -14,10 +14,9 @@ categories = ["science", "mathematics"]
 
 [dependencies]
 thiserror = "2.0"
-logp = "0.1.3"
+logp = "0.2"
 
 [dev-dependencies]
 proptest = "1.9"
 wass = "0.1"
 ndarray = "0.16"
-

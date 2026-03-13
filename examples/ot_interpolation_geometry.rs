@@ -1,14 +1,17 @@
 //! Cross-crate example: optimal transport interpolation meets information geometry.
 //!
-//! Constructs a family of distributions via two interpolation strategies (mixture
-//! and displacement via Sinkhorn transport plan), then measures Fisher--Rao distance,
-//! Hellinger distance, and Sinkhorn divergence along each path from p0.
+//! Constructs a family of distributions via three interpolation strategies:
+//! - Fisher-Rao geodesic (Riemannian geodesic on the simplex)
+//! - Mixture (m-geodesic, alpha=-1)
+//! - Displacement interpolation via Sinkhorn transport plan
 //!
-//! Key insight: Fisher--Rao measures geodesic distance on the probability simplex
+//! Then measures Fisher-Rao distance and Hellinger distance along each path from p0.
+//!
+//! Key insight: Fisher-Rao measures geodesic distance on the probability simplex
 //! (intrinsic curvature), while Wasserstein/Sinkhorn measures the cost of mass
 //! transport (ground-metric dependent). They can disagree on which paths are "short."
 
-use infogeom::{hellinger, rao_distance_categorical};
+use infogeom::{fisher_rao_geodesic, hellinger, m_geodesic, rao_distance_categorical};
 use ndarray::{Array1, Array2};
 
 // ---------------------------------------------------------------------------
@@ -32,14 +35,6 @@ fn cost_1d(n: usize) -> Array2<f32> {
         }
     }
     c
-}
-
-/// Mixture (linear) interpolation: p_t = (1-t)*p0 + t*p1.
-fn mixture(p0: &[f64], p1: &[f64], t: f64) -> Vec<f64> {
-    p0.iter()
-        .zip(p1.iter())
-        .map(|(&a, &b)| (1.0 - t) * a + t * b)
-        .collect()
 }
 
 /// Displacement interpolation via a transport plan T.
@@ -94,43 +89,37 @@ fn main() {
 
     // --- Table header ---
     println!(
-        "{:>4}  {:>12} {:>12} {:>12}  {:>12} {:>12} {:>12}",
-        "t", "FR(mix)", "H(mix)", "S_eps(mix)", "FR(disp)", "H(disp)", "S_eps(disp)"
+        "{:>4}  {:>12} {:>12}  {:>12} {:>12}  {:>12} {:>12}",
+        "t", "FR(fr-geo)", "FR(mix)", "FR(disp)", "H(fr-geo)", "H(mix)", "H(disp)"
     );
-    println!("{}", "-".repeat(88));
+    println!("{}", "-".repeat(92));
 
     let steps: Vec<f64> = (0..=10).map(|i| i as f64 / 10.0).collect();
 
     for &t in &steps {
-        let pm = mixture(&p0, &p1, t);
+        let pfr = fisher_rao_geodesic(&p0, &p1, t, tol).expect("fisher-rao geodesic");
+        let pm = m_geodesic(&p0, &p1, t, tol).expect("m-geodesic");
         let pd = displacement(&p0, &plan, t, n);
 
-        // Fisher--Rao distance from p0 to interpolated distribution.
+        // Fisher-Rao distance from p0 to interpolated distribution.
+        let fr_geo = rao_distance_categorical(&p0, &pfr, tol).expect("rao (fr-geo)");
         let fr_mix = rao_distance_categorical(&p0, &pm, tol).expect("rao (mix)");
         let fr_disp = rao_distance_categorical(&p0, &pd, tol).expect("rao (disp)");
 
         // Hellinger distance from p0.
+        let h_geo = hellinger(&p0, &pfr, tol).expect("hellinger (fr-geo)");
         let h_mix = hellinger(&p0, &pm, tol).expect("hellinger (mix)");
         let h_disp = hellinger(&p0, &pd, tol).expect("hellinger (disp)");
 
-        // Sinkhorn divergence from p0 (f32 world).
-        let am = to_f32(&pm);
-        let ad = to_f32(&pd);
-        let s_mix = wass::sinkhorn_divergence_same_support(&a, &am, &cost, reg, max_iter, 1e-6)
-            .expect("sinkhorn div (mix)");
-        let s_disp = wass::sinkhorn_divergence_same_support(&a, &ad, &cost, reg, max_iter, 1e-6)
-            .expect("sinkhorn div (disp)");
-
         println!(
-            "{t:>4.1}  {fr_mix:>12.6} {h_mix:>12.6} {s_mix:>12.6}  {fr_disp:>12.6} {h_disp:>12.6} {s_disp:>12.6}",
+            "{t:>4.1}  {fr_geo:>12.6} {fr_mix:>12.6}  {fr_disp:>12.6} {h_geo:>12.6}  {h_mix:>12.6} {h_disp:>12.6}",
         );
     }
 
     println!();
 
     // --- Verification: endpoint sanity ---
-    // At t=0, all distances from p0 should be ~0.
-    let pm0 = mixture(&p0, &p1, 0.0);
+    let pm0 = m_geodesic(&p0, &p1, 0.0, tol).expect("m-geo t=0");
     let pd0 = displacement(&p0, &plan, 0.0, n);
     assert!(
         rao_distance_categorical(&p0, &pm0, tol).expect("rao t=0 mix") < 1e-10,
@@ -141,21 +130,26 @@ fn main() {
         "displacement at t=0 should be near p0"
     );
 
-    // At t=1, distances should match p0-vs-p1.
     let fr_full = rao_distance_categorical(&p0, &p1, tol).expect("rao full");
-    let fr_mix_1 = rao_distance_categorical(&p0, &mixture(&p0, &p1, 1.0), tol).expect("rao t=1");
+    let pm1 = m_geodesic(&p0, &p1, 1.0, tol).expect("m-geo t=1");
+    let fr_mix_1 = rao_distance_categorical(&p0, &pm1, tol).expect("rao t=1");
     assert!(
         (fr_full - fr_mix_1).abs() < 1e-10,
         "mixture at t=1 should equal p1"
     );
 
     // --- Metric comparison ---
-    // Compute cumulative arc lengths along each path for Fisher--Rao.
+    // Compute cumulative arc lengths along each path for Fisher-Rao.
+    let mut arc_geo = 0.0_f64;
     let mut arc_mix = 0.0_f64;
     let mut arc_disp = 0.0_f64;
     for i in 1..steps.len() {
-        let prev_m = mixture(&p0, &p1, steps[i - 1]);
-        let curr_m = mixture(&p0, &p1, steps[i]);
+        let prev_fr = fisher_rao_geodesic(&p0, &p1, steps[i - 1], tol).expect("arc fr prev");
+        let curr_fr = fisher_rao_geodesic(&p0, &p1, steps[i], tol).expect("arc fr curr");
+        arc_geo += rao_distance_categorical(&prev_fr, &curr_fr, tol).expect("arc fr");
+
+        let prev_m = m_geodesic(&p0, &p1, steps[i - 1], tol).expect("arc mix prev");
+        let curr_m = m_geodesic(&p0, &p1, steps[i], tol).expect("arc mix curr");
         arc_mix += rao_distance_categorical(&prev_m, &curr_m, tol).expect("arc mix");
 
         let prev_d = displacement(&p0, &plan, steps[i - 1], n);
@@ -163,13 +157,15 @@ fn main() {
         arc_disp += rao_distance_categorical(&prev_d, &curr_d, tol).expect("arc disp");
     }
 
-    println!("Cumulative Fisher--Rao arc length (sum of consecutive distances):");
+    println!("Cumulative Fisher-Rao arc length (sum of consecutive distances):");
+    println!("  FR geodesic path:   {arc_geo:.6}");
     println!("  Mixture path:       {arc_mix:.6}");
     println!("  Displacement path:  {arc_disp:.6}");
     println!("  Direct p0->p1:      {fr_full:.6}");
     println!();
     println!("The direct distance is a lower bound (triangle inequality).");
-    println!("Mixture interpolation is generally NOT the Fisher--Rao geodesic,");
+    println!("The FR geodesic path should have arc length closest to the direct distance.");
+    println!("Mixture interpolation is NOT the Fisher-Rao geodesic,");
     println!("so its arc length exceeds the direct distance.");
 
     // Sinkhorn divergence at endpoints for comparison.
@@ -178,7 +174,11 @@ fn main() {
     println!();
     println!("Sinkhorn divergence p0 vs p1: {s_full:.6}");
 
-    // Verify triangle inequality for Fisher--Rao arc lengths.
+    // Verify triangle inequality for Fisher-Rao arc lengths.
+    assert!(
+        arc_geo + 1e-8 >= fr_full,
+        "triangle inequality violated for FR geodesic path"
+    );
     assert!(
         arc_mix + 1e-8 >= fr_full,
         "triangle inequality violated for mixture path"

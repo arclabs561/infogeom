@@ -4,25 +4,12 @@
 [![Documentation](https://docs.rs/infogeom/badge.svg)](https://docs.rs/infogeom)
 [![CI](https://github.com/arclabs561/infogeom/actions/workflows/ci.yml/badge.svg)](https://github.com/arclabs561/infogeom/actions/workflows/ci.yml)
 
-Information geometry primitives for probability distributions: metrics and distances on the
-simplex (Fisher–Rao / Rao, Hellinger) without mixing in application policy.
-
-This crate is *classical* information geometry (simplex / exponential-family direction), not
-quantum IG (density-matrix geometry lives in the separate `qig` crate).
-
-## Why this exists
-
-When you work with categorical distributions (points on the probability simplex), Euclidean
-distance is often the wrong default. `infogeom` starts from distances that respect the simplex’s
-geometry, so you can:
-
-- compare distributions in a geometry-aware way (Rao / Fisher–Rao),
-- use a bounded metric that stays well-scaled (Hellinger),
-- reuse small building blocks inside larger algorithms (clustering, interpolation, monitoring).
+Information geometry on the probability simplex: Fisher-Rao geodesics, alpha-geodesics,
+and natural gradient for categorical distributions. Builds on
+[logp](https://crates.io/crates/logp) for divergence primitives (KL, Hellinger,
+Bhattacharyya, etc.).
 
 ## Quickstart
-
-Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -30,53 +17,67 @@ Add to your `Cargo.toml`:
 infogeom = { git = "https://github.com/arclabs561/infogeom" }
 ```
 
-Compute Rao (Fisher–Rao) and Hellinger distances on the simplex:
-
 ```rust
-use infogeom::{rao_distance_categorical, hellinger};
+use infogeom::{fisher_rao_geodesic, rao_distance_categorical};
 
 let p = [0.70, 0.20, 0.10];
 let q = [0.10, 0.20, 0.70];
 
-let d_rao = rao_distance_categorical(&p, &q, 1e-12).unwrap();
-let d_hel = hellinger(&p, &q, 1e-12).unwrap();
+// Fisher-Rao geodesic midpoint.
+let mid = fisher_rao_geodesic(&p, &q, 0.5, 1e-12).unwrap();
 
-assert!(d_rao >= 0.0);
-assert!((0.0..=1.0).contains(&d_hel));
+// The midpoint is equidistant from both endpoints.
+let d_full = rao_distance_categorical(&p, &q, 1e-12).unwrap();
+let d_half = rao_distance_categorical(&p, &mid, 1e-12).unwrap();
+assert!((d_half - d_full / 2.0).abs() < 1e-10);
 ```
 
-## Status
+## API
 
-- Experimental, small surface.
-- Not published on crates.io yet (`Cargo.toml` sets `publish = false`).
+### Distances
 
-## API tour
+| Function | Description |
+|---|---|
+| `rao_distance_categorical(p, q, tol)` | Fisher-Rao distance on the simplex (radians, range [0, pi]) |
+| `hellinger(p, q, tol)` | Hellinger distance (re-exported from `logp`, range [0, 1]) |
 
-- `rao_distance_categorical(p, q, tol) -> Result<f64>`
-  - Fisher–Rao (Rao) distance on the simplex via the sphere embedding:
-    \(d_{FR}(p,q) = 2\arccos(\sum_i \sqrt{p_i q_i})\)
-- `hellinger(p, q, tol) -> Result<f64>`
-  - Hellinger distance (bounded metric on the simplex):
-    \(H^2(p,q) = 1 - \sum_i \sqrt{p_i q_i}\)
+### Geodesics
 
-## Invariants and tolerances
+All take `(p, q, t, tol)` where `t` in [0, 1] interpolates from `p` to `q`.
 
-- Inputs are validated as simplex distributions (nonnegative, sum≈1) using `tol`.
-- Distances are returned as:
-  - Rao: radians in \([0, \pi]\)
-  - Hellinger: \([0, 1]\)
+| Function | Alpha | Description |
+|---|---|---|
+| `fisher_rao_geodesic` | 0 | Riemannian geodesic via sphere embedding (slerp) |
+| `m_geodesic` | -1 | Mixture geodesic: linear interpolation in probability space |
+| `e_geodesic` | +1 | Exponential geodesic: linear interpolation in log space (requires strictly positive entries) |
 
-Background reading:
-- Frank Nielsen’s “Information geometry and divergences” portal: [franknielsen.github.io/IG](https://franknielsen.github.io/IG/index.html)
+### Fisher information and natural gradient
+
+| Function | Description |
+|---|---|
+| `fisher_information_diagonal(p, tol)` | Diagonal of the Fisher information matrix: `[1/p_1, ..., 1/p_n]` |
+| `natural_gradient(p, euclidean_grad)` | Natural gradient: `p_i * g_i` (inverse Fisher metric applied to Euclidean gradient) |
+
+## Tolerances
+
+- Inputs are validated as simplex distributions (nonnegative, sum approximately 1) using `tol`.
+- The `tol` parameter also controls degenerate-case snapping (e.g., BC near 1.0).
+
+## References
+
+- Amari & Nagaoka (2000), *Methods of Information Geometry*. Ch. 2-3 (Fisher metric, alpha-connections).
+- Amari (1998), "Natural Gradient Works Efficiently in Learning", *Neural Computation* 10(2).
+- Frank Nielsen's information geometry portal: [franknielsen.github.io/IG](https://franknielsen.github.io/IG/index.html)
 
 ## Examples
 
-- `cargo run --example simplex_distances`
+- `cargo run --example simplex_distances` -- geodesics, distances, and natural gradient
+- `cargo run --example divergence_geometry` -- cross-crate comparison with `logp` divergences
+- `cargo run --example ot_interpolation_geometry` -- geodesics vs. optimal transport interpolation
 
-## Roadmap (near-term)
+## Status
 
-- Simplex geodesic/interpolation helpers (sphere embedding).
-- \(\alpha\)-geometry scaffolding and dual-flat primitives (staying policy-free).
+Not published on crates.io (`publish = false`).
 
 ## License
 
