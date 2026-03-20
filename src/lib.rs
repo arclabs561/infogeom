@@ -41,6 +41,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+#[cfg(feature = "manifold")]
+mod manifold;
+#[cfg(feature = "manifold")]
+pub use manifold::FisherRaoSimplex;
+
 use thiserror::Error;
 
 /// Re-export Hellinger distance from `logp`.
