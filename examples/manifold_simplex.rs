@@ -29,7 +29,8 @@ fn main() {
 
     // exp_map: recover q from p + v
     let q_recovered = m.exp_map(&p.view(), &v.view());
-    let err: f64 = q.iter()
+    let err: f64 = q
+        .iter()
         .zip(q_recovered.iter())
         .map(|(a, b)| (a - b).abs())
         .sum();
@@ -37,12 +38,9 @@ fn main() {
     println!("round-trip L1 error: {err:.2e}");
 
     // Fisher-Rao distance via infogeom
-    let d_rao = infogeom::rao_distance_categorical(
-        p.as_slice().unwrap(),
-        q.as_slice().unwrap(),
-        1e-12,
-    )
-    .unwrap();
+    let d_rao =
+        infogeom::rao_distance_categorical(p.as_slice().unwrap(), q.as_slice().unwrap(), 1e-12)
+            .unwrap();
     println!("\nFisher-Rao distance: {d_rao:.6} rad");
 
     // Geodesic interpolation at t=0.25, 0.5, 0.75

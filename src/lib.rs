@@ -22,6 +22,12 @@
 //! - [`fisher_information_diagonal`]: diagonal of the Fisher information matrix for categoricals
 //! - [`natural_gradient`]: multiply Euclidean gradient by the inverse Fisher metric
 //!
+//! ## Fisher-orthogonal projection
+//!
+//! - [`fisher_orthogonal_project`]: project gradient onto Fisher-orthogonal complement
+//!   of past task gradients (diagonal Fisher approximation)
+//! - [`fisher_orthogonal_project_full`]: same, with full Fisher matrix
+//!
 //! ## Quick example
 //!
 //! ```rust
@@ -45,6 +51,9 @@
 mod manifold;
 #[cfg(feature = "manifold")]
 pub use manifold::FisherRaoSimplex;
+
+mod projection;
+pub use projection::{fisher_orthogonal_project, fisher_orthogonal_project_full};
 
 use thiserror::Error;
 

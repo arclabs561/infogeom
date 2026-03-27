@@ -21,6 +21,14 @@ ndarray = { version = "0.16", optional = true }
 [features]
 manifold = ["dep:skel", "dep:ndarray"]
 
+[[example]]
+name = "manifold_simplex"
+required-features = ["manifold"]
+
+[[example]]
+name = "ot_interpolation_geometry"
+required-features = ["manifold"]
+
 [dev-dependencies]
 proptest = "1.9"
 wass = "0.1"

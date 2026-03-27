@@ -70,9 +70,11 @@ fn tangent_lift(p: &ArrayView1<f64>, v: &ArrayView1<f64>) -> Array1<f64> {
 }
 
 fn tangent_drop(p: &ArrayView1<f64>, u: &Array1<f64>) -> Array1<f64> {
-    Array1::from_iter(p.iter().zip(u.iter()).map(|(&pi, &ui)| {
-        2.0 * pi.max(0.0).sqrt() * ui
-    }))
+    Array1::from_iter(
+        p.iter()
+            .zip(u.iter())
+            .map(|(&pi, &ui)| 2.0 * pi.max(0.0).sqrt() * ui),
+    )
 }
 
 impl Manifold for FisherRaoSimplex {
