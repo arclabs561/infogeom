@@ -4,10 +4,7 @@
 [![Documentation](https://docs.rs/infogeom/badge.svg)](https://docs.rs/infogeom)
 [![CI](https://github.com/arclabs561/infogeom/actions/workflows/ci.yml/badge.svg)](https://github.com/arclabs561/infogeom/actions/workflows/ci.yml)
 
-Information geometry on the probability simplex: Fisher-Rao geodesics, alpha-geodesics,
-and natural gradient for categorical distributions. Builds on
-[logp](https://crates.io/crates/logp) for divergence primitives (KL, Hellinger,
-Bhattacharyya, etc.).
+Information geometry on the probability simplex.
 
 ## Quickstart
 
