@@ -12,6 +12,8 @@ readme = "README.md"
 keywords = ["information-geometry", "fisher-rao", "divergence", "riemannian-geometry"]
 categories = ["science", "mathematics"]
 
+[workspace]
+
 [dependencies]
 thiserror = "2.0"
 logp = "0.2"
