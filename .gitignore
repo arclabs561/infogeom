@@ -2,3 +2,4 @@
 **/*.rs.bk
 proptest-regressions/
 
+Cargo.lock
