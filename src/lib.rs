@@ -282,6 +282,55 @@ pub fn e_geodesic(p: &[f64], q: &[f64], t: f64, tol: f64) -> Result<Vec<f64>> {
     Ok(result)
 }
 
+/// Alpha-geodesic on the simplex (Amari alpha-connection), unifying the
+/// mixture, exponential, and Fisher-Rao families in one parametric surface.
+///
+/// Affine parameterization in the alpha-embedding `f_alpha(p)` proportional to
+/// `p^((1 - alpha) / 2)`: interpolate the embeddings linearly, then renormalize
+/// onto the simplex.
+///
+/// - `alpha = -1.0` reduces exactly to [`m_geodesic`] (linear in `p`).
+/// - `alpha = 1.0` reduces exactly to [`e_geodesic`] (linear in `log p`).
+/// - `alpha = 0.0` traces the same curve as [`fisher_rao_geodesic`] (the
+///   sqrt-embedding great circle); the curve is identical, but the parameter is
+///   the affine-alpha one rather than the arc-length (slerp) one, so the spacing
+///   of intermediate points differs.
+///
+/// `alpha > 1.0` uses a negative embedding exponent and so requires strictly
+/// positive entries (same zero-entry error as the exponential geodesic);
+/// `alpha <= 1.0` allows zeros.
+///
+/// Reference: Amari & Nagaoka (2000), Ch. 2-3 (alpha-connections).
+pub fn alpha_geodesic(p: &[f64], q: &[f64], t: f64, alpha: f64, tol: f64) -> Result<Vec<f64>> {
+    validate_t(t)?;
+    logp::validate_simplex(p, tol)?;
+    logp::validate_simplex(q, tol)?;
+    validate_same_len(p, q, "p", "q")?;
+
+    // alpha = +1 is the log-embedding limit; delegate to the stable e-geodesic.
+    if (alpha - 1.0).abs() < tol {
+        return e_geodesic(p, q, t, tol);
+    }
+
+    let m = (1.0 - alpha) / 2.0; // alpha-embedding exponent
+    if m < 0.0 {
+        validate_strictly_positive(p)?;
+        validate_strictly_positive(q)?;
+    }
+
+    let unnorm: Vec<f64> = p
+        .iter()
+        .zip(q.iter())
+        .map(|(&pi, &qi)| {
+            let mixed = (1.0 - t) * pi.powf(m) + t * qi.powf(m);
+            mixed.powf(1.0 / m)
+        })
+        .collect();
+
+    let sum: f64 = unnorm.iter().sum();
+    Ok(unnorm.iter().map(|&v| v / sum).collect())
+}
+
 // ---------------------------------------------------------------------------
 // Fisher information and natural gradient
 // ---------------------------------------------------------------------------
@@ -591,5 +640,52 @@ mod tests {
         let over = fisher_rao_geodesic(&p, &q, 1.5, 1e-12);
         assert!(over.is_err());
         assert!(over.unwrap_err().to_string().contains("outside [0, 1]"));
+    }
+
+    #[test]
+    fn alpha_geodesic_subsumes_m_and_e() {
+        let p = [0.5, 0.3, 0.2];
+        let q = [0.2, 0.5, 0.3];
+        for &t in &[0.0, 0.25, 0.5, 0.75, 1.0] {
+            let a = alpha_geodesic(&p, &q, t, -1.0, 1e-12).unwrap();
+            let m = m_geodesic(&p, &q, t, 1e-12).unwrap();
+            for (x, y) in a.iter().zip(m.iter()) {
+                assert!((x - y).abs() < 1e-9, "alpha=-1 != m_geodesic at t={t}");
+            }
+            let a1 = alpha_geodesic(&p, &q, t, 1.0, 1e-12).unwrap();
+            let e = e_geodesic(&p, &q, t, 1e-12).unwrap();
+            for (x, y) in a1.iter().zip(e.iter()) {
+                assert!((x - y).abs() < 1e-9, "alpha=+1 != e_geodesic at t={t}");
+            }
+        }
+    }
+
+    #[test]
+    fn alpha_geodesic_endpoints_and_simplex() {
+        let p = [0.5, 0.3, 0.2];
+        let q = [0.2, 0.5, 0.3];
+        for &alpha in &[-1.0, -0.5, 0.0, 0.5, 1.0] {
+            let g0 = alpha_geodesic(&p, &q, 0.0, alpha, 1e-12).unwrap();
+            let g1 = alpha_geodesic(&p, &q, 1.0, alpha, 1e-12).unwrap();
+            for (x, y) in g0.iter().zip(p.iter()) {
+                assert!((x - y).abs() < 1e-9);
+            }
+            for (x, y) in g1.iter().zip(q.iter()) {
+                assert!((x - y).abs() < 1e-9);
+            }
+            for &t in &[0.3, 0.5] {
+                let g = alpha_geodesic(&p, &q, t, alpha, 1e-12).unwrap();
+                let s: f64 = g.iter().sum();
+                assert!((s - 1.0).abs() < 1e-9, "alpha={alpha} t={t} sum={s}");
+            }
+        }
+    }
+
+    #[test]
+    fn alpha_geodesic_negative_exponent_needs_positive() {
+        let p = [0.5, 0.0, 0.5];
+        let q = [0.2, 0.5, 0.3];
+        assert!(alpha_geodesic(&p, &q, 0.5, 2.0, 1e-12).is_err());
+        assert!(alpha_geodesic(&p, &q, 0.5, 0.0, 1e-12).is_ok());
     }
 }
