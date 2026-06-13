@@ -5,7 +5,7 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.1] - 2026-06-13
 
 ### Added
 - `alpha_geodesic(p, q, t, alpha, tol)`: the general alpha-family geodesic on the simplex via the affine alpha-embedding, reducing exactly to `m_geodesic` at `alpha = -1` and `e_geodesic` at `alpha = +1`. `alpha > 1` requires strictly positive entries.
