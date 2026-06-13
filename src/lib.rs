@@ -44,9 +44,8 @@
 //! assert!((d_half - d_full / 2.0).abs() < 1e-10);
 //! ```
 //!
-//! # Related crates
-//! - [`qig`]: Quantum generalization of Fisher-Rao geometry to density matrices.
-//! - [`logp`]: Provides the underlying divergences (KL, Hellinger) that infogeom's geodesics are built from.
+//! # Built on
+//! - [`logp`]: provides the underlying divergences (KL, Hellinger) that infogeom's geodesics are built from.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
