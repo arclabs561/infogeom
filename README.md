@@ -74,7 +74,6 @@ All take `(p, q, t, tol)` where `t` in [0, 1] interpolates from `p` to `q`.
 
 ## Status
 
-Not published on crates.io (`publish = false`).
 
 ## License
 
