@@ -1,6 +1,6 @@
 [package]
 name = "infogeom"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Information geometry on the simplex: Fisher-Rao geodesics, alpha-geodesics, and natural gradient"
 license = "MIT OR Apache-2.0"
