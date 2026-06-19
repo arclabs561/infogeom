@@ -10,8 +10,7 @@ Information geometry on the probability simplex.
 
 ```toml
 [dependencies]
-# Not on crates.io yet; depend via git (pin `rev` for reproducibility).
-infogeom = { git = "https://github.com/arclabs561/infogeom" }
+infogeom = "0.2.1"
 ```
 
 ```rust
