@@ -167,6 +167,23 @@ fn validate_strictly_positive(p: &[f64]) -> Result<()> {
 ///
 /// Reference: Amari & Nagaoka (2000), Ch. 2, Thm. 2.2 (Fisher metric on statistical
 /// models).
+///
+/// # Example
+///
+/// ```rust
+/// use infogeom::rao_distance_categorical;
+/// use std::f64::consts::PI;
+///
+/// let p = [0.25, 0.75];
+/// let q = [0.75, 0.25];
+///
+/// // BC(p, q) = 2*sqrt(0.1875) = 0.8660, so d = 2*arccos(0.8660) = PI/3.
+/// let d = rao_distance_categorical(&p, &q, 1e-12).unwrap();
+/// assert!((d - PI / 3.0).abs() < 1e-9, "d = {d}");
+///
+/// // Zero self-distance (the snap heuristic guarantees it exactly).
+/// assert_eq!(rao_distance_categorical(&p, &p, 1e-12).unwrap(), 0.0);
+/// ```
 pub fn rao_distance_categorical(p: &[f64], q: &[f64], tol: f64) -> Result<f64> {
     let mut bc = logp::bhattacharyya_coeff(p, q, tol)?;
 
