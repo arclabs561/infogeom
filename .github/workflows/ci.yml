@@ -21,3 +21,9 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings
       - name: test
         run: cargo test --all-targets
+      - name: run example assertions
+        run: |
+          cargo run --example divergence_geometry
+          cargo run --example retrieval_distribution_shift
+          cargo run --example simplex_distances
+          cargo run --example ot_interpolation_geometry --features manifold
