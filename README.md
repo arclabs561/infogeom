@@ -68,12 +68,12 @@ All take `(p, q, t, tol)` where `t` in [0, 1] interpolates from `p` to `q` (`alp
 
 ## Examples
 
-- `cargo run --example simplex_distances` -- geodesics, distances, and natural gradient
-- `cargo run --example divergence_geometry` -- cross-crate comparison with `logp` divergences
-- `cargo run --example retrieval_distribution_shift` -- Fisher-Rao drift and natural-gradient feedback for ranker output distributions
-- `cargo run --example ot_interpolation_geometry` -- geodesics vs. optimal transport interpolation
-- `cargo run --example manifold_simplex` -- Fisher-Rao simplex as a `skel::Manifold` (requires `--features manifold`)
-- `cargo run --example alpha_geodesic_family` -- the alpha-family midpoint of two humps, rendered: mixture keeps both peaks, exponential pulls to the overlap, Fisher-Rao between
+- `cargo run --example simplex_distances`: geodesics, distances, and natural gradient
+- `cargo run --example divergence_geometry`: cross-crate comparison with `logp` divergences
+- `cargo run --example retrieval_distribution_shift`: Fisher-Rao drift and natural-gradient feedback for ranker output distributions
+- `cargo run --example ot_interpolation_geometry`: geodesics vs. optimal transport interpolation
+- `cargo run --example manifold_simplex`: Fisher-Rao simplex as a `skel::Manifold` (requires `--features manifold`)
+- `cargo run --example alpha_geodesic_family`: the alpha-family midpoint of two humps, rendered: mixture keeps both peaks, exponential pulls to the overlap, Fisher-Rao between
 
 ## License
 
