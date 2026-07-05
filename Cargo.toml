@@ -33,6 +33,6 @@ required-features = ["manifold"]
 
 [dev-dependencies]
 proptest = "1.9"
-wass = "0.1"
+wass = "0.2.2"
 ndarray = "0.16"
-skel = "0.1"
+skel = "0.1.7"
