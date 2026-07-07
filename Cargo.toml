@@ -2,7 +2,7 @@
 name = "infogeom"
 version = "0.2.1"
 edition = "2021"
-description = "Information geometry on the simplex: Fisher-Rao geodesics, alpha-geodesics, and natural gradient"
+description = "Information geometry on the probability simplex"
 license = "MIT OR Apache-2.0"
 publish = true
 repository = "https://github.com/arclabs561/infogeom"
