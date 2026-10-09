@@ -7,8 +7,17 @@ license = "MIT OR Apache-2.0"
 publish = true
 repository = "https://github.com/arclabs561/infogeom"
 homepage = "https://github.com/arclabs561/infogeom"
-documentation = "https://github.com/arclabs561/infogeom#readme"
+documentation = "https://docs.rs/infogeom"
 readme = "README.md"
+include = [
+  "/src/**/*.rs",
+  "/examples/**/*.rs",
+  "/Cargo.toml",
+  "/CHANGELOG.md",
+  "/LICENSE*",
+  "/README.md",
+]
+rust-version = "1.75"
 keywords = ["information-geometry", "fisher-rao", "divergence", "riemannian-geometry"]
 categories = ["science", "mathematics"]
 
