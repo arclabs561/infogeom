@@ -20,7 +20,7 @@
 //! ## Fisher information
 //!
 //! - [`fisher_information_diagonal`]: diagonal of the Fisher information matrix for categoricals
-//! - [`natural_gradient`]: multiply Euclidean gradient by the inverse Fisher metric
+//! - [`natural_gradient`]: apply the inverse Fisher metric to a Euclidean gradient (result is tangent to the simplex)
 //!
 //! ## Fisher-orthogonal projection
 //!
@@ -368,20 +368,28 @@ pub fn fisher_information_diagonal(p: &[f64], tol: f64) -> Result<Vec<f64>> {
 
 /// Natural gradient on the categorical manifold.
 ///
-/// The Fisher information matrix for categorical distributions is diag(1/p_i).
-/// Its inverse is diag(p_i), so the natural gradient is the elementwise product:
+/// The Fisher metric of the categorical family is <u, v> = sum_i u_i v_i / p_i
+/// on tangent vectors of the simplex (sum_i v_i = 0). The Riemannian gradient
+/// v must satisfy <u, v> = u . g for every tangent u, which gives
 ///
-///   (nabla_nat f)_i = p_i * g_i
+///   (nabla_nat f)_i = p_i * (g_i - p . g)
 ///
-/// where g is the Euclidean gradient.
+/// where g is the Euclidean gradient. The p . g term keeps the result tangent
+/// to the simplex (its entries sum to 0); plain diag(p) g would step off it.
+/// Adding a constant to every g_i does not change the result.
 ///
 /// Reference: Amari (1998), "Natural Gradient Works Efficiently in Learning",
 /// Neural Computation 10(2), pp. 251-276.
 pub fn natural_gradient(p: &[f64], euclidean_grad: &[f64]) -> Result<Vec<f64>> {
     validate_same_len(p, euclidean_grad, "p", "euclidean_grad")?;
-    Ok(p.iter()
+    let mean: f64 = p
+        .iter()
         .zip(euclidean_grad.iter())
         .map(|(&pi, &gi)| pi * gi)
+        .sum();
+    Ok(p.iter()
+        .zip(euclidean_grad.iter())
+        .map(|(&pi, &gi)| pi * (gi - mean))
         .collect())
 }
 
@@ -614,20 +622,54 @@ mod tests {
     }
 
     proptest! {
-        /// For uniform p = [1/n, ..., 1/n], natural_gradient(p, g) = g / n.
+        /// For uniform p = [1/n, ..., 1/n], natural_gradient(p, g) = (g - mean(g)) / n.
         #[test]
-        fn natural_gradient_on_uniform_equals_euclidean_scaled(
+        fn natural_gradient_on_uniform_equals_centered_euclidean_scaled(
             g in prop::collection::vec(-10.0f64..10.0, 5),
         ) {
             let n = g.len();
             let p: Vec<f64> = vec![1.0 / n as f64; n];
             let ng = natural_gradient(&p, &g).unwrap();
+            let mean = g.iter().sum::<f64>() / n as f64;
 
             for i in 0..n {
-                let expected = g[i] / n as f64;
-                prop_assert!((ng[i] - expected).abs() < 1e-14,
-                    "natural_gradient[{i}]={} != g[{i}]/n={}", ng[i], expected);
+                let expected = (g[i] - mean) / n as f64;
+                prop_assert!((ng[i] - expected).abs() < 1e-13,
+                    "natural_gradient[{i}]={} != (g[{i}]-mean)/n={}", ng[i], expected);
             }
+        }
+
+        /// The natural gradient is a tangent vector of the simplex, so its
+        /// coordinates sum to 0, and it ignores a constant shift of g (which
+        /// is normal to the simplex).
+        #[test]
+        fn natural_gradient_is_tangent_to_simplex(
+            raw in prop::collection::vec(0.01f64..1.0, 2..8),
+            g_seed in prop::collection::vec(-10.0f64..10.0, 8),
+            shift in -5.0f64..5.0,
+        ) {
+            let s: f64 = raw.iter().sum();
+            let p: Vec<f64> = raw.iter().map(|x| x / s).collect();
+            let g = &g_seed[..p.len()];
+            let ng = natural_gradient(&p, g).unwrap();
+            let sum: f64 = ng.iter().sum();
+            prop_assert!(sum.abs() < 1e-12, "sum of natural gradient {sum} != 0");
+
+            let g_shift: Vec<f64> = g.iter().map(|x| x + shift).collect();
+            let ng_shift = natural_gradient(&p, &g_shift).unwrap();
+            for (a, b) in ng.iter().zip(&ng_shift) {
+                prop_assert!((a - b).abs() < 1e-12, "shift changed result: {a} vs {b}");
+            }
+        }
+    }
+
+    #[test]
+    fn natural_gradient_matches_hand_computed_value() {
+        // p = (0.7, 0.2, 0.1), g = (1, -0.5, 0.3): p.g = 0.63, so
+        // p * (g - 0.63) = (0.259, -0.226, -0.033).
+        let ng = natural_gradient(&[0.7, 0.2, 0.1], &[1.0, -0.5, 0.3]).unwrap();
+        for (got, want) in ng.iter().zip([0.259, -0.226, -0.033]) {
+            assert!((got - want).abs() < 1e-12, "{ng:?}");
         }
     }
 

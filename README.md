@@ -52,7 +52,7 @@ All take `(p, q, t, tol)` where `t` in [0, 1] interpolates from `p` to `q` (`alp
 | Function | Description |
 |---|---|
 | `fisher_information_diagonal(p, tol)` | Diagonal of the Fisher information matrix: `[1/p_1, ..., 1/p_n]` |
-| `natural_gradient(p, euclidean_grad)` | Natural gradient: `p_i * g_i` (inverse Fisher metric applied to Euclidean gradient) |
+| `natural_gradient(p, euclidean_grad)` | Natural gradient: `p_i * (g_i - p . g)` (inverse Fisher metric applied to Euclidean gradient, tangent to the simplex) |
 
 ## Tolerances
 

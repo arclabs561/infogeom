@@ -67,7 +67,8 @@ fn main() {
 
     // --- Natural gradient ---
     // The natural gradient rescales the Euclidean gradient by the inverse Fisher metric.
-    // For categoricals, F^{-1} = diag(p_i), so natural_grad_i = p_i * grad_i.
+    // For categoricals, F^{-1} = diag(p_i) on the simplex tangent space, so
+    // natural_grad_i = p_i * (grad_i - p . grad), whose entries sum to 0.
     // This removes the implicit Euclidean geometry and follows the steepest direction
     // on the Fisher-Rao manifold. In practice, the natural gradient downweights
     // updates to rare categories and upweights updates to common ones.
@@ -75,13 +76,14 @@ fn main() {
     let ng = natural_gradient(&p, &grad).unwrap();
     println!("Euclidean gradient: {grad:?}");
     println!("Natural gradient:   {ng:?}");
-    println!("  natural_grad_i = p_i * grad_i (inverse Fisher metric applied)");
+    println!("  natural_grad_i = p_i * (grad_i - p . grad) (inverse Fisher metric applied)");
+    assert!(ng.iter().sum::<f64>().abs() < 1e-12);
     println!(
-        "  Category 0 (p=0.70): gradient 1.0 -> {:.4} (upweighted by large p)",
+        "  Category 0 (p=0.70): gradient 1.0 -> {:.4} (large p, large step)",
         ng[0]
     );
     println!(
-        "  Category 2 (p=0.10): gradient 0.3 -> {:.4} (downweighted by small p)",
+        "  Category 2 (p=0.10): gradient 0.3 -> {:.4} (small p, small step)",
         ng[2]
     );
 
