@@ -50,6 +50,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+// Compile and run the README's Rust examples as doctests.
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeDoctests;
+
 #[cfg(feature = "manifold")]
 mod manifold;
 #[cfg(feature = "manifold")]
