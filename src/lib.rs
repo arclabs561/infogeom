@@ -321,12 +321,19 @@ pub fn e_geodesic(p: &[f64], q: &[f64], t: f64, tol: f64) -> Result<Vec<f64>> {
 /// positive entries (same zero-entry error as the exponential geodesic);
 /// `alpha <= 1.0` allows zeros.
 ///
+/// `alpha` must be finite. Nonfinite values return [`Error::Logp`] wrapping
+/// [`logp::Error::Domain`] with the message `alpha must be finite`.
+///
 /// Reference: Amari & Nagaoka (2000), Ch. 2-3 (alpha-connections).
 pub fn alpha_geodesic(p: &[f64], q: &[f64], t: f64, alpha: f64, tol: f64) -> Result<Vec<f64>> {
     validate_t(t)?;
     logp::validate_simplex(p, tol)?;
     logp::validate_simplex(q, tol)?;
     validate_same_len(p, q, "p", "q")?;
+
+    if !alpha.is_finite() {
+        return Err(logp::Error::Domain("alpha must be finite").into());
+    }
 
     // alpha = +1 is the log-embedding limit; delegate to the stable e-geodesic.
     if (alpha - 1.0).abs() < tol {
@@ -705,6 +712,52 @@ mod tests {
         assert!(over.unwrap_err().to_string().contains("outside [0, 1]"));
     }
 
+    fn assert_nonfinite_alpha_rejected(alpha: f64) {
+        let result = alpha_geodesic(&[0.5, 0.5], &[0.58, 0.42], 0.5, alpha, 1e-12);
+        eprintln!("alpha={alpha:?}: {result:?}");
+        assert!(matches!(
+            result,
+            Err(Error::Logp(logp::Error::Domain("alpha must be finite")))
+        ));
+    }
+
+    #[test]
+    fn alpha_geodesic_rejects_nan() {
+        assert_nonfinite_alpha_rejected(f64::NAN);
+    }
+
+    #[test]
+    fn alpha_geodesic_rejects_positive_infinity() {
+        assert_nonfinite_alpha_rejected(f64::INFINITY);
+    }
+
+    #[test]
+    fn alpha_geodesic_rejects_negative_infinity() {
+        assert_nonfinite_alpha_rejected(f64::NEG_INFINITY);
+    }
+
+    #[test]
+    fn alpha_geodesic_preserves_input_error_precedence() {
+        for alpha in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            assert!(matches!(
+                alpha_geodesic(&[], &[], -1.0, alpha, 1e-12),
+                Err(Error::InvalidT { .. })
+            ));
+            assert!(matches!(
+                alpha_geodesic(&[], &[1.0], 0.5, alpha, 1e-12),
+                Err(Error::Logp(logp::Error::Empty))
+            ));
+            assert!(matches!(
+                alpha_geodesic(&[1.0], &[], 0.5, alpha, 1e-12),
+                Err(Error::Logp(logp::Error::Empty))
+            ));
+            assert!(matches!(
+                alpha_geodesic(&[1.0], &[0.5, 0.5], 0.5, alpha, 1e-12),
+                Err(Error::LengthMismatch { .. })
+            ));
+        }
+    }
+
     #[test]
     fn alpha_geodesic_subsumes_m_and_e() {
         let p = [0.5, 0.3, 0.2];
@@ -717,6 +770,8 @@ mod tests {
             }
             let a1 = alpha_geodesic(&p, &q, t, 1.0, 1e-12).unwrap();
             let e = e_geodesic(&p, &q, t, 1e-12).unwrap();
+            let near_one = alpha_geodesic(&p, &q, t, 1.0 + 5e-13, 1e-12).unwrap();
+            assert_eq!(near_one, e);
             for (x, y) in a1.iter().zip(e.iter()) {
                 assert!((x - y).abs() < 1e-9, "alpha=+1 != e_geodesic at t={t}");
             }
@@ -727,7 +782,7 @@ mod tests {
     fn alpha_geodesic_endpoints_and_simplex() {
         let p = [0.5, 0.3, 0.2];
         let q = [0.2, 0.5, 0.3];
-        for &alpha in &[-1.0, -0.5, 0.0, 0.5, 1.0] {
+        for &alpha in &[-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0] {
             let g0 = alpha_geodesic(&p, &q, 0.0, alpha, 1e-12).unwrap();
             let g1 = alpha_geodesic(&p, &q, 1.0, alpha, 1e-12).unwrap();
             for (x, y) in g0.iter().zip(p.iter()) {
@@ -738,6 +793,7 @@ mod tests {
             }
             for &t in &[0.3, 0.5] {
                 let g = alpha_geodesic(&p, &q, t, alpha, 1e-12).unwrap();
+                assert!(g.iter().all(|v| v.is_finite() && *v >= 0.0));
                 let s: f64 = g.iter().sum();
                 assert!((s - 1.0).abs() < 1e-9, "alpha={alpha} t={t} sum={s}");
             }
