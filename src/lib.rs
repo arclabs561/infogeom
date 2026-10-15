@@ -161,14 +161,16 @@ fn validate_strictly_positive(p: &[f64]) -> Result<()> {
 ///
 /// where BC is the Bhattacharyya coefficient.
 ///
-/// # Snap heuristic
+/// `tol` must be finite and nonnegative and controls simplex validation only.
+/// Accepted inputs must have finite positive total mass; each is normalized before
+/// evaluating distance. Thus proportional inputs represent the same distribution,
+/// subject to floating-point rounding. Zero coordinates are allowed.
 ///
-/// When `BC(p,q)` is within `10 * tol` of 1.0, we snap it to exactly 1.0 so that
-/// `d(p, p) == 0` despite floating-point error. The factor 10x accounts for accumulated
-/// rounding in the BC summation: each of the n sqrt-multiply-accumulate steps can
-/// introduce up to ~eps_machine error, so the total deviation from the true BC is
-/// bounded roughly by n * eps. Using 10 * tol provides margin for dimensions up to
-/// approximately 10 / eps_machine (about 10^17 for f64 with tol=1e-12).
+/// The equivalent square-root chord formula `4 * asin(||sqrt(p)-sqrt(q)|| / 2)`
+/// avoids cancellation in `acos` near equality. Identical inputs have exact zero
+/// distance; distinct nearby distributions are not snapped together using `tol`.
+/// Invalid tolerance or nonpositive mass returns [`Error::Logp`] wrapping
+/// [`logp::Error::Domain`]. Existing simplex validation errors are preserved.
 ///
 /// Reference: Amari & Nagaoka (2000), Ch. 2, Thm. 2.2 (Fisher metric on statistical
 /// models).
@@ -186,18 +188,53 @@ fn validate_strictly_positive(p: &[f64]) -> Result<()> {
 /// let d = rao_distance_categorical(&p, &q, 1e-12).unwrap();
 /// assert!((d - PI / 3.0).abs() < 1e-9, "d = {d}");
 ///
-/// // Zero self-distance (the snap heuristic guarantees it exactly).
+/// // Identical inputs have exact zero self-distance.
 /// assert_eq!(rao_distance_categorical(&p, &p, 1e-12).unwrap(), 0.0);
 /// ```
 pub fn rao_distance_categorical(p: &[f64], q: &[f64], tol: f64) -> Result<f64> {
-    let mut bc = logp::bhattacharyya_coeff(p, q, tol)?;
-
-    bc = bc.clamp(0.0, 1.0);
-    // Snap BC to 1.0 when within 10*tol of 1.0. See doc comment above for rationale.
-    if (1.0 - bc).abs() <= 10.0 * tol {
-        bc = 1.0;
+    // Retain the coefficient API's length-error type and validation order.
+    if p.len() != q.len() {
+        return Err(logp::Error::LengthMismatch(p.len(), q.len()).into());
     }
-    Ok(2.0 * bc.acos())
+    if !tol.is_finite() || tol < 0.0 {
+        return Err(logp::Error::Domain("tolerance must be finite and nonnegative").into());
+    }
+    logp::validate_simplex(p, tol)?;
+    logp::validate_simplex(q, tol)?;
+    let p_mass: f64 = p.iter().sum();
+    let q_mass: f64 = q.iter().sum();
+    if !p_mass.is_finite() || !q_mass.is_finite() || p_mass <= 0.0 || q_mass <= 0.0 {
+        return Err(logp::Error::Domain("total mass must be finite and positive").into());
+    }
+    let p_scale = p_mass.sqrt();
+    let q_scale = q_mass.sqrt();
+    let mut chord = 0.0_f64;
+    for (&pi, &qi) in p.iter().zip(q) {
+        let delta = if p_mass == q_mass {
+            if pi == qi {
+                0.0
+            } else {
+                // Rationalize before normalization to retain adjacent inputs and
+                // subnormal masses that would vanish when divided by the total.
+                ((pi - qi) / (pi.sqrt() + qi.sqrt())) / p_scale
+            }
+        } else {
+            let a = pi / p_mass;
+            let b = qi / q_mass;
+            if a.is_normal() && b.is_normal() {
+                (a - b) / (a.sqrt() + b.sqrt())
+            } else {
+                // Taking roots first avoids underflow and subnormal rounding
+                // in the normalized probabilities.
+                pi.sqrt() / p_scale - qi.sqrt() / q_scale
+            }
+        };
+        chord = chord.hypot(delta);
+    }
+    // The positive orthant's largest chord is sqrt(2); clamp rounding only.
+    let distance = 4.0 * (chord.min(core::f64::consts::SQRT_2) / 2.0).asin();
+    // asin rounding at the largest chord can put the result one ulp above pi.
+    Ok(distance.min(core::f64::consts::PI))
 }
 
 // ---------------------------------------------------------------------------
@@ -482,11 +519,11 @@ mod tests {
         #[test]
         fn rao_matches_bhattacharyya_formula(p in simplex_vec(10), q in simplex_vec(10)) {
             let rao = rao_distance_categorical(&p, &q, TOL).unwrap();
-            let mut bc = logp::bhattacharyya_coeff(&p, &q, TOL).unwrap();
-            bc = bc.clamp(0.0, 1.0);
-            if (1.0 - bc).abs() <= 10.0 * TOL {
-                bc = 1.0;
-            }
+            let bc = (logp::bhattacharyya_coeff(&p, &q, TOL).unwrap()
+                / (p.iter().sum::<f64>().sqrt() * q.iter().sum::<f64>().sqrt()))
+                .clamp(0.0, 1.0);
+            // acos is an independent control away from its ill-conditioned endpoint.
+            prop_assume!(bc < 0.99);
             let expected = 2.0 * bc.acos();
             prop_assert!((rao - expected).abs() < 1e-12, "rao={rao} expected={expected} bc={bc}");
         }

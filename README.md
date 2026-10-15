@@ -57,7 +57,12 @@ All take `(p, q, t, tol)` where `t` in [0, 1] interpolates from `p` to `q` (`alp
 ## Tolerances
 
 - Inputs are validated as simplex distributions (nonnegative, sum approximately 1) using `tol`.
-- The `tol` parameter also controls degenerate-case snapping (e.g., BC near 1.0).
+- For `rao_distance_categorical`, `tol` must be finite and nonnegative and
+  controls validation only. Accepted inputs must have finite positive mass and
+  are normalized before distance evaluation. Nearby distributions are not snapped
+  to zero distance; proportional inputs represent the same distribution, subject
+  to floating-point rounding.
+- Geodesic functions retain their existing degenerate-case tolerance behavior.
 
 ## References
 

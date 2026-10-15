@@ -16,6 +16,15 @@ These entries identify source changes without assigning a package release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Categorical Fisher–Rao distance no longer snaps nearby distributions to zero
+  using the validation tolerance, which could violate the triangle inequality.
+  Accepted positive-mass inputs are normalized and evaluated with a square-root
+  chord formula. Tolerance must be finite and nonnegative; zero total mass is
+  rejected through the existing wrapped domain error. Geodesic, manifold and
+  finite-alpha behavior are unchanged.
+
 ## [0.2.2] - 2026-10-09
 
 ### Changed

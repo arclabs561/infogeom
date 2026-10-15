@@ -79,7 +79,36 @@ fn main() {
     let cost = cost_1d(n);
     let reg = 0.05_f32;
     let max_iter = 500;
-    let (plan, ot_cost) = wass::sinkhorn_log(&a, &b, &cost, reg, max_iter);
+    // This is a per-bin marginal tolerance, not a Fisher–Rao distance tolerance.
+    let marginal_tol = 1e-6_f32;
+    let (plan, ot_cost, _) =
+        wass::sinkhorn_log_with_convergence(&a, &b, &cost, reg, max_iter, marginal_tol)
+            .expect("transport plan must satisfy its marginal tolerance");
+    // Check both marginals in f64 independently of the solver's f32 reduction.
+    let coordinate_budget = f64::from(marginal_tol) + n as f64 * f64::from(f32::EPSILON);
+    let total_budget = n as f64 * coordinate_budget;
+    let normalized_l1_budget = 2.0 * total_budget / (1.0 - total_budget);
+    for (target, rows) in [(&p0, true), (&p1, false)] {
+        let marginal: Vec<f64> = (0..n)
+            .map(|i| {
+                (0..n)
+                    .map(|j| f64::from(if rows { plan[[i, j]] } else { plan[[j, i]] }))
+                    .sum()
+            })
+            .collect();
+        let total: f64 = marginal.iter().sum();
+        assert!(total.is_finite() && total > 0.0);
+        assert!(marginal
+            .iter()
+            .zip(target)
+            .all(|(a, b)| (a - b).abs() <= coordinate_budget));
+        let normalized_l1: f64 = marginal
+            .iter()
+            .zip(target)
+            .map(|(a, b)| (a / total - b).abs())
+            .sum();
+        assert!(normalized_l1 <= normalized_l1_budget);
+    }
 
     println!("Endpoint distributions:");
     println!("  p0 = {:?}", p0);
@@ -125,10 +154,19 @@ fn main() {
         rao_distance_categorical(&p0, &pm0, tol).expect("rao t=0 mix") < 1e-10,
         "mixture at t=0 should equal p0"
     );
+    // The f32 plan has approximate marginals. Verify the actual coordinate
+    // residual, then use ||sqrt(p)-sqrt(q)||² <= ||p-q||_1 to bound its FR error.
+    // Root geometry can amplify coordinate errors near small probabilities;
+    // a coordinate tolerance is therefore not the same as a metric tolerance.
+    let endpoint_l1: f64 = p0.iter().zip(&pd0).map(|(a, b)| (a - b).abs()).sum();
     assert!(
-        rao_distance_categorical(&p0, &pd0, tol).expect("rao t=0 disp") < 1e-6,
-        "displacement at t=0 should be near p0"
+        endpoint_l1 <= normalized_l1_budget,
+        "normalized endpoint exceeds the marginal error budget"
     );
+    let endpoint_bound = 4.0 * (endpoint_l1.sqrt() / 2.0).asin();
+    let endpoint_distance = rao_distance_categorical(&p0, &pd0, tol).expect("rao t=0 disp");
+    assert!(endpoint_distance <= endpoint_bound + 1e-14);
+    println!("Displacement endpoint: FR residual {endpoint_distance:.3e}, marginal-derived bound {endpoint_bound:.3e}");
 
     let fr_full = rao_distance_categorical(&p0, &p1, tol).expect("rao full");
     let pm1 = m_geodesic(&p0, &p1, 1.0, tol).expect("m-geo t=1");
