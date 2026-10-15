@@ -5,6 +5,15 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Source history (unversioned)
+
+These entries identify source changes without assigning a package release.
+
+- Reject non-finite `alpha` in `alpha_geodesic` through the existing
+  `Error::Logp(logp::Error::Domain("alpha must be finite"))` error, after
+  validating the other inputs.
+  ([a20e7f1](https://github.com/arclabs561/infogeom/commit/a20e7f142bd00049e9dc394c51907e4b5cf54d3f))
+
 ## [Unreleased]
 
 ## [0.2.2] - 2026-10-09
