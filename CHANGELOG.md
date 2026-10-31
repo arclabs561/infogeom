@@ -16,6 +16,8 @@ These entries identify source changes without assigning a package release.
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-30
+
 ### Fixed
 
 - `fisher_orthogonal_project` and `fisher_orthogonal_project_full` scale the
