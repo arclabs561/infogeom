@@ -373,7 +373,8 @@ pub fn alpha_geodesic(p: &[f64], q: &[f64], t: f64, alpha: f64, tol: f64) -> Res
     }
 
     // alpha = +1 is the log-embedding limit; delegate to the stable e-geodesic.
-    if (alpha - 1.0).abs() < tol {
+    // `<=` so that tol = 0 still routes alpha = 1 (exponent m = 0) here.
+    if (alpha - 1.0).abs() <= tol {
         return e_geodesic(p, q, t, tol);
     }
 
@@ -843,5 +844,20 @@ mod tests {
         let q = [0.2, 0.5, 0.3];
         assert!(alpha_geodesic(&p, &q, 0.5, 2.0, 1e-12).is_err());
         assert!(alpha_geodesic(&p, &q, 0.5, 0.0, 1e-12).is_ok());
+    }
+
+    #[test]
+    fn alpha_geodesic_alpha_one_zero_tol_is_e_geodesic() {
+        // alpha = 1 gives embedding exponent m = 0; with tol = 0 the curve must
+        // still be the e-geodesic, not p^0 = 1 renormalized to uniform.
+        let p = [0.25, 0.75];
+        let q = [0.75, 0.25];
+        for &t in &[0.0, 0.3, 1.0] {
+            let a = alpha_geodesic(&p, &q, t, 1.0, 0.0).unwrap();
+            let e = e_geodesic(&p, &q, t, 0.0).unwrap();
+            for (x, y) in a.iter().zip(e.iter()) {
+                assert!((x - y).abs() < 1e-12, "t={t}: {a:?} vs {e:?}");
+            }
+        }
     }
 }

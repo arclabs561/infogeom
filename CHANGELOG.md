@@ -16,6 +16,12 @@ These entries identify source changes without assigning a package release.
 
 ## [Unreleased]
 
+### Fixed
+
+- `alpha_geodesic` with `alpha = 1.0` and `tol = 0.0` now delegates to
+  `e_geodesic`. Before, the strict comparison skipped the delegation, the
+  embedding exponent became 0, and every point on the curve was uniform.
+
 ## [0.2.3] - 2026-10-30
 
 ### Fixed
