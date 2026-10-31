@@ -27,7 +27,7 @@ categories = ["science", "mathematics"]
 thiserror = "2.0"
 logp = "0.2"
 skel = { version = "0.1", optional = true }
-ndarray = { version = "0.16", optional = true }
+ndarray = { version = "0.17", optional = true }
 
 [features]
 manifold = ["dep:skel", "dep:ndarray"]
@@ -43,5 +43,5 @@ required-features = ["manifold"]
 [dev-dependencies]
 proptest = "1.9"
 wass = "0.2.2"
-ndarray = "0.16"
+ndarray = "0.17"
 skel = "0.1.7"
