@@ -9,7 +9,7 @@ Information geometry on the probability simplex.
 
 ```toml
 [dependencies]
-infogeom = "0.2.2"
+infogeom = "0.2.3"
 ```
 
 ```rust
