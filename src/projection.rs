@@ -176,12 +176,19 @@ fn matvec(mat: &[f64], v: &[f64], d: usize) -> Vec<f64> {
 
 /// Solve A x = b for symmetric positive-definite A via Cholesky decomposition.
 ///
-/// Falls back to regularization (A + eps * I) if the matrix is near-singular,
-/// which happens when past gradients are nearly collinear in the Fisher metric.
+/// Adds a ridge `eps * I` so near-singular A (past gradients nearly collinear
+/// in the Fisher metric) still factors. `eps` is relative to the largest
+/// diagonal entry: an absolute ridge dominates A when gradients or the Fisher
+/// diagonal are small, and most of the past component then survives.
 fn solve_symmetric_positive(a: &[f64], b: &[f64], n: usize) -> Result<Vec<f64>> {
     // Cholesky: A = L L^T
     let mut l = vec![0.0; n * n];
-    let eps = 1e-12;
+    let max_diag = (0..n).map(|i| a[i * n + i]).fold(0.0_f64, f64::max);
+    if max_diag <= 0.0 {
+        // Every past gradient has zero Fisher norm: nothing to project out.
+        return Ok(vec![0.0; n]);
+    }
+    let eps = 1e-12 * max_diag;
 
     for i in 0..n {
         for j in 0..=i {
