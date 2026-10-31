@@ -18,6 +18,11 @@ These entries identify source changes without assigning a package release.
 
 ### Fixed
 
+- `fisher_orthogonal_project` and `fisher_orthogonal_project_full` scale the
+  Cholesky ridge to the largest diagonal of `GᵀFG` instead of adding a fixed
+  1e-12. With small gradients or a small diagonal Fisher (an EWC-style
+  diagonal near 1e-8), the fixed ridge dominated and 50 to 99% of the past
+  component survived projection.
 - Categorical Fisher–Rao distance no longer snaps nearby distributions to zero
   using the validation tolerance, which could violate the triangle inequality.
   Accepted positive-mass inputs are normalized and evaluated with a square-root
