@@ -62,21 +62,22 @@ All take `(p, q, t, tol)` where `t` in [0, 1] interpolates from `p` to `q` (`alp
   are normalized before distance evaluation. Nearby distributions are not snapped
   to zero distance; proportional inputs represent the same distribution, subject
   to floating-point rounding.
-- Geodesic functions retain their existing degenerate-case tolerance behavior.
+- `fisher_rao_geodesic` returns `p` unchanged when the angle between `p` and
+  `q` is below `tol`; `alpha_geodesic` delegates to `e_geodesic` when `alpha`
+  is within `tol` of 1.
 
 ## References
 
 - Amari & Nagaoka (2000), *Methods of Information Geometry*. Ch. 2-3 (Fisher metric, alpha-connections).
 - Amari (1998), "Natural Gradient Works Efficiently in Learning", *Neural Computation* 10(2).
-- Frank Nielsen's information geometry portal: [franknielsen.github.io/IG](https://franknielsen.github.io/IG/index.html)
 
 ## Examples
 
 - `cargo run --example simplex_distances`: geodesics, distances, and natural gradient
 - `cargo run --example divergence_geometry`: cross-crate comparison with `logp` divergences
 - `cargo run --example retrieval_distribution_shift`: Fisher-Rao drift and natural-gradient feedback for ranker output distributions
-- `cargo run --example ot_interpolation_geometry`: geodesics vs. optimal transport interpolation
-- `cargo run --example manifold_simplex`: Fisher-Rao simplex as a `skel::Manifold` (requires `--features manifold`)
+- `cargo run --example ot_interpolation_geometry --features manifold`: geodesics vs. optimal transport interpolation
+- `cargo run --example manifold_simplex --features manifold`: Fisher-Rao simplex as a `skel::Manifold`
 - `cargo run --example alpha_geodesic_family`: the alpha-family midpoint of two humps, rendered: mixture keeps both peaks, exponential pulls to the overlap, Fisher-Rao between
 
 ## License
