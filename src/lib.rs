@@ -384,17 +384,20 @@ pub fn alpha_geodesic(p: &[f64], q: &[f64], t: f64, alpha: f64, tol: f64) -> Res
         validate_strictly_positive(q)?;
     }
 
-    let unnorm: Vec<f64> = p
+    // ((1 - t) p^m + t q^m)^(1/m) in log space. With small |m|, p^m rounds
+    // to 1 and loses the log p term; expm1/ln_1p keep it, so the curve
+    // approaches the e-geodesic continuously as alpha -> 1.
+    let log_unnorm: Vec<f64> = p
         .iter()
         .zip(q.iter())
         .map(|(&pi, &qi)| {
-            let mixed = (1.0 - t) * pi.powf(m) + t * qi.powf(m);
-            mixed.powf(1.0 / m)
+            let mixed_m1 = (1.0 - t) * (m * pi.ln()).exp_m1() + t * (m * qi.ln()).exp_m1();
+            mixed_m1.ln_1p() / m
         })
         .collect();
 
-    let sum: f64 = unnorm.iter().sum();
-    Ok(unnorm.iter().map(|&v| v / sum).collect())
+    let lse = logp::log_sum_exp(&log_unnorm);
+    Ok(log_unnorm.iter().map(|&v| (v - lse).exp()).collect())
 }
 
 // ---------------------------------------------------------------------------
@@ -857,6 +860,22 @@ mod tests {
             let e = e_geodesic(&p, &q, t, 0.0).unwrap();
             for (x, y) in a.iter().zip(e.iter()) {
                 assert!((x - y).abs() < 1e-12, "t={t}: {a:?} vs {e:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn alpha_geodesic_near_one_converges_to_e_geodesic() {
+        // Just outside the tol shortcut the true curve differs from the
+        // e-geodesic by O(1 - alpha), here about 1e-12. Computing p^m with
+        // m = 2e-12 directly lost about 3e-6 to rounding.
+        let p = [0.1, 0.2, 0.7];
+        let q = [0.6, 0.3, 0.1];
+        let e = e_geodesic(&p, &q, 0.3, 1e-12).unwrap();
+        for alpha in [1.0 - 4e-12, 1.0 + 4e-12, 1.0 - 1e-8] {
+            let a = alpha_geodesic(&p, &q, 0.3, alpha, 1e-12).unwrap();
+            for (x, y) in a.iter().zip(e.iter()) {
+                assert!((x - y).abs() < 1e-8, "alpha={alpha}: {a:?} vs {e:?}");
             }
         }
     }
