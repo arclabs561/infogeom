@@ -21,6 +21,10 @@ These entries identify source changes without assigning a package release.
 - `alpha_geodesic` with `alpha = 1.0` and `tol = 0.0` now delegates to
   `e_geodesic`. Before, the strict comparison skipped the delegation, the
   embedding exponent became 0, and every point on the curve was uniform.
+- `alpha_geodesic` evaluates the alpha-embedding mixture in log space with
+  `exp_m1` and `ln_1p`. Near `alpha = 1` (outside `tol`), `p^m` rounded
+  toward 1 and the result drifted about 3e-6 from the e-geodesic it should
+  approach.
 
 ## [0.2.3] - 2026-10-30
 
