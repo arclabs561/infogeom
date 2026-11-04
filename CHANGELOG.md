@@ -16,6 +16,8 @@ These entries identify source changes without assigning a package release.
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-11-04
+
 ### Fixed
 
 - `alpha_geodesic` with `alpha = 1.0` and `tol = 0.0` now delegates to

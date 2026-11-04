@@ -1,6 +1,6 @@
 [package]
 name = "infogeom"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2021"
 description = "Information geometry on the probability simplex"
 license = "MIT OR Apache-2.0"
